@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="overlay" class="hidden">
+    <div id="dialog" role="dialog" aria-modal="true" aria-labelledby="title">
+      <div class="bar">
+        <span class="dot" id="dot"></span>
+        <h1 id="title">Emergency Services</h1>
+        <button id="x" title="Close" aria-label="Close">&times;</button>
+      </div>
+
+      <div id="stepKind">
+        <p class="hint">Is this an emergency?</p>
+        <div class="choices">
+          <button id="pickEmergency" class="choice emergency">
+            <span class="num">911</span>
+            <span class="lbl">Emergency</span>
+            <span class="sub">Danger to life or property right now</span>
+          </button>
+          <button id="pickNonEmergency" class="choice nonemergency">
+            <span class="num">311</span>
+            <span class="lbl">Non-emergency</span>
+            <span class="sub">Noise, nuisance, or something that can wait</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="stepReason" class="hidden">
+        <p class="hint" id="reasonHint">What is the reason for your call? Dispatch will see your location.</p>
+        <textarea id="desc" maxlength="300" placeholder="Describe what is happening..." aria-describedby="reasonHint error" aria-invalid="false"></textarea>
+        <p id="error" class="error hidden" role="alert"></p>
+        <div class="meta">
+          <label id="anonWrap" class="anon">
+            <input type="checkbox" id="anon" />
+            <span class="box" aria-hidden="true"></span>
+            <span>Call anonymously</span>
+          </label>
+          <span id="count" class="count">0 / 300</span>
+        </div>
+        <div class="actions">
+          <button id="back" class="ghost">Back</button>
+          <button id="send" class="primary">Place call</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
