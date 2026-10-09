@@ -37,6 +37,9 @@ Use `set`, not `setr`, for the PulseMDT credentials. `setr` exposes a convar to 
 - `/911 <description>` places an identified emergency call immediately.
 - `/311` opens the non-emergency description form.
 - `/311 <description>` places an identified non-emergency call immediately.
+- `/911assign <call-number>` assigns your authorized, on-duty dispatch unit to an active call (for example, `/911assign 6`). Existing assigned units are preserved.
+
+Successful connected call submissions show the CAD reference number in the caller confirmation and on-duty dispatch alert. When the CAD is offline, queued calls do not have a reference number until synchronized; they cannot be assigned by reference yet.
 
 The form opens directly on the requested call type. Its Back button allows the caller to change between emergency and non-emergency before submitting.
 
@@ -78,6 +81,10 @@ With OneSync enabled, the server prefers its own player coordinates. If server-s
 ### The resource will not start
 
 Confirm the folder is named `pulse_911`, `fxmanifest.lua` is at its root, and `pulsemdt` starts first. Check the server console for a missing `pulsemdt` dependency.
+
+### /911assign says you cannot assign a call
+
+Make sure the player is on duty in PulseMDT, has a linked Discord account and a police, fire, EMS, or dispatch role, and is in an available or busy duty status. Confirm the call number is still active. This command also requires a PulseMDT web version that implements the authenticated `/api/fivem/[guildId]/cad/[id]/assign` endpoint.
 
 ### Calls report that dispatch is unavailable
 
