@@ -87,6 +87,8 @@ end)
 RegisterNetEvent('pulse_911:dispatchAlert', function(call)
     if not call then return end
     local head = call.emergency and '~r~911 DISPATCH~s~' or '~y~311 DISPATCH~s~'
+    local reference = tostring(call.id or '')
+    if reference:match('^%d+$') then head = head .. ' #' .. reference end
     notify(('%s\n%s\n~b~%s~s~'):format(head, call.description or '', call.location or 'Unknown'))
 
     if Config.Blip and Config.Blip.enabled and type(call.lat) == 'number' and type(call.lng) == 'number' then

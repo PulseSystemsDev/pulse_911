@@ -386,16 +386,19 @@ RegisterNetEvent('pulse_911:submit', function(data)
 
     local completed = false
     local dispatched = pcall(function()
-        exports.pulsemdt:ApiWrite('POST', '/cad', body, function(code)
+        exports.pulsemdt:ApiWrite('POST', '/cad', body, function(code, result)
             if completed then return end
             completed = true
 
             local status = tonumber(code)
             local queued = status == 0
             local accepted = status and status >= 200 and status < 300
+            local reference = accepted and type(result) == 'table' and tostring(result.id or '') or ''
+            if not reference:match('^%d+$') then reference = '' end
 
             if accepted or queued then
                 finishRequest(key, token, true)
+                if reference ~= '' then alert.id = reference end
                 alertOfficers(alert)
                 if queued then
                     respond(src, key, {
@@ -405,7 +408,7 @@ RegisterNetEvent('pulse_911:submit', function(data)
                 else
                     respond(src, key, {
                         ok = true,
-                        message = kind.label .. ' received. Units are being notified.',
+                        message = kind.label .. (reference ~= '' and (' #' .. reference) or '') .. ' received. Units are being notified.',
                     })
                 end
                 return
@@ -427,4 +430,88 @@ RegisterNetEvent('pulse_911:submit', function(data)
             message = 'Dispatch is unavailable right now.',
         })
     end
+end)
+
+-- The server resolves the requesting player's Discord identity. Players may
+-- assign only themselves; the PulseMDT API rechecks their guild and duty rights.
+local assignmentInFlight = {}
+
+RegisterCommand('911assign', function(src, args)
+    if src == 0 then
+        print('[pulse_911] /911assign is only available to players.')
+        return
+    end
+
+    local key = playerKey(src)
+    local function reply(message, ok)
+        respond(src, key, { ok = ok == true, message = message })
+    end
+
+    local reference = type(args) == 'table' and args[1] or nil
+    if type(reference) ~= 'string' or #reference > 18
+        or not reference:match('^[1-9]%d*$') then
+        reply('Usage: /911assign <call number> (example: /911assign 6)')
+        return
+    end
+    if not RCFG.enabled then
+        reply('911 dispatch is disabled on this server.')
+        return
+    end
+
+    local discordId = getDiscordId(src)
+    if not discordId then
+        reply('Link your Discord account to FiveM before assigning calls.')
+        return
+    end
+
+    local allowed, onDuty = pcall(function()
+        return exports.pulsemdt:IsOnDuty(src)
+            and exports.pulsemdt:HasCadJob(src, 'police', 'fire', 'ems', 'dispatch')
+    end)
+    if not allowed or not onDuty then
+        reply('You must be an authorized, on-duty dispatch unit to assign calls.')
+        return
+    end
+    if assignmentInFlight[src] then
+        reply('Your previous assignment request is still processing.')
+        return
+    end
+
+    assignmentInFlight[src] = key
+    local finished = false
+    local function finish(code, data)
+        if finished then return end
+        finished = true
+        if assignmentInFlight[src] == key then assignmentInFlight[src] = nil end
+        if not isSamePlayer(src, key) or getDiscordId(src) ~= discordId then return end
+
+        code = tonumber(code) or 0
+        local message = type(data) == 'table' and data.error or nil
+        if code == 200 then
+            if type(data) == 'table' and data.alreadyAssigned then
+                reply('You are already assigned to call #' .. reference .. '.', true)
+            else
+                reply('You are now assigned to call #' .. reference .. '.', true)
+            end
+        elseif code == 404 then
+            reply('Call #' .. reference .. ' was not found.')
+        elseif code == 409 then
+            reply('Call #' .. reference .. ' is no longer active.')
+        elseif code == 401 or code == 403 then
+            reply(message or 'Your CAD access does not allow this assignment.')
+        else
+            reply(message or 'Assignment failed. Try again shortly.')
+        end
+    end
+
+    local sent = pcall(function()
+        exports.pulsemdt:ApiRequest('POST', '/cad/' .. reference .. '/assign',
+            { discordId = discordId }, finish)
+    end)
+    if not sent then finish(0, {}) end
+    SetTimeout(12000, function() finish(0, {}) end)
+end, false)
+
+AddEventHandler('playerDropped', function()
+    assignmentInFlight[source] = nil
 end)
