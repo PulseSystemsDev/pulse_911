@@ -394,28 +394,7 @@ RegisterNetEvent('pulse_911:submit', function(data)
             local queued = status == 0
             local accepted = status and status >= 200 and status < 300
             local reference = accepted and type(result) == 'table' and tostring(result.id or '') or ''
-            if not reference:match('^%d+
-                return
-            end
-
-            finishRequest(key, token, false)
-            respond(src, key, {
-                ok = false,
-                message = 'Your call could not be placed. Please try again.',
-            })
-        end)
-    end)
-
-    if not dispatched and not completed then
-        completed = true
-        finishRequest(key, token, false)
-        respond(src, key, {
-            ok = false,
-            message = 'Dispatch is unavailable right now.',
-        })
-    end
-end)
-) then reference = '' end
+            if not reference:match('^%d+$') then reference = '' end
 
             if accepted or queued then
                 finishRequest(key, token, true)
@@ -453,8 +432,8 @@ end)
     end
 end)
 
--- Only the trusted FiveM server can send the caller's Discord identity to
--- the web API. A player's chat command never chooses its own identity.
+-- The server resolves the requesting player's Discord identity. Players may
+-- assign only themselves; the PulseMDT API rechecks their guild and duty rights.
 local assignmentInFlight = {}
 
 RegisterCommand('911assign', function(src, args)
