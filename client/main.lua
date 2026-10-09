@@ -88,30 +88,7 @@ RegisterNetEvent('pulse_911:dispatchAlert', function(call)
     if not call then return end
     local head = call.emergency and '~r~911 DISPATCH~s~' or '~y~311 DISPATCH~s~'
     local reference = tostring(call.id or '')
-    if reference:match('^%d+
-
-    if Config.Blip and Config.Blip.enabled and type(call.lat) == 'number' and type(call.lng) == 'number' then
-        local blip = AddBlipForCoord(call.lng + 0.0, call.lat + 0.0, 30.0)
-        SetBlipSprite(blip, tonumber(Config.Blip.sprite) or 280)
-        SetBlipColour(blip, tonumber(Config.Blip.color) or 1)
-        SetBlipScale(blip, tonumber(Config.Blip.scale) or 1.1)
-        SetBlipAsShortRange(blip, false)
-        if call.emergency then SetBlipFlashes(blip, true) end
-        BeginTextCommandSetBlipName('STRING')
-        AddTextComponentSubstringPlayerName(call.call_type or 'Dispatch')
-        EndTextCommandSetBlipName(blip)
-        SetTimeout(math.max(1, tonumber(Config.Blip.duration) or 90) * 1000, function()
-            if DoesBlipExist(blip) then RemoveBlip(blip) end
-        end)
-    end
-end)
-
-AddEventHandler('onResourceStop', function(resourceName)
-    if resourceName == GetCurrentResourceName() then
-        SetNuiFocus(false, false)
-    end
-end)
-) then head = head .. ' #' .. reference end
+    if reference:match('^%d+$') then head = head .. ' #' .. reference end
     notify(('%s\n%s\n~b~%s~s~'):format(head, call.description or '', call.location or 'Unknown'))
 
     if Config.Blip and Config.Blip.enabled and type(call.lat) == 'number' and type(call.lng) == 'number' then
